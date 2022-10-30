@@ -27,7 +27,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.util.Log;
 import android.view.View;
 
@@ -56,26 +58,12 @@ public class TestVideoEncoderActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test_video_encoder);
         produceTextureView = (ProduceTextureView) findViewById(R.id.produce_view);
-
-
-        produceTextureView.setOnCreateGLContextListener(new GLThread.OnCreateGLContextListener() {
-            @Override
-            public void onCreate(EglContextWrapper eglContext) {
-                testVideoEncoder = new TestVideoEncoder(getApplicationContext(), eglContext);
-            }
+        produceTextureView.setOnCreateGLContextListener(eglContext -> testVideoEncoder = new TestVideoEncoder(getApplicationContext(), eglContext));
+        produceTextureView.setOnSurfaceTextureSet((surfaceTexture, rawTexture) -> {
+            testVideoEncoder.addSharedTexture(rawTexture, surfaceTexture);
+            surfaceTexture.setOnFrameAvailableListener(surfaceTexture1 -> {
+            });
         });
-        produceTextureView.setOnSurfaceTextureSet(new GLSurfaceTextureProducerView.OnSurfaceTextureSet() {
-            @Override
-            public void onSet(SurfaceTexture surfaceTexture, RawTexture rawTexture) {
-                testVideoEncoder.addSharedTexture(rawTexture, surfaceTexture);
-                surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
-                    @Override
-                    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                    }
-                });
-            }
-        });
-
 
         outputVideoThread = new HandlerThread("outputVideoThread");
         outputVideoThread.start();
@@ -97,23 +85,19 @@ public class TestVideoEncoderActivity extends AppCompatActivity {
                 super.handleMessage(msg);
                 if (msg.what == 1) {
                     final Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.lenna);
-                    testVideoEncoder.prepareEncoder(new H264Encoder.OnDrawListener() {
-                        @Override
-                        public void onGLDraw(ICanvasGL canvasGL, List<GLTexture> producedTextures, List<GLTexture> consumedTextures) {
+                    testVideoEncoder.prepareEncoder((canvasGL, producedTextures, consumedTextures) -> {
 
-                            TestVideoEncoder.drawCnt++;
+                        TestVideoEncoder.drawCnt++;
 
-                            if (TestVideoEncoder.drawCnt == 19 || TestVideoEncoder.drawCnt == 39) {
-                                canvasGL.drawBitmap(bitmap, 0, 0);
-                            }
-                            TestVideoEncoder.drawRect(canvasGL, TestVideoEncoder.drawCnt);
-
-                            if (TestVideoEncoder.drawCnt >= 60) {
-                                TestVideoEncoder.drawCnt = 0;
-                            }
-                            Log.i("TestVideoEncoder", "gl draw");
+                        if (TestVideoEncoder.drawCnt == 19 || TestVideoEncoder.drawCnt == 39) {
+                            canvasGL.drawBitmap(bitmap, 0, 0);
                         }
+                        TestVideoEncoder.drawRect(canvasGL, TestVideoEncoder.drawCnt);
 
+                        if (TestVideoEncoder.drawCnt >= 60) {
+                            TestVideoEncoder.drawCnt = 0;
+                        }
+                        Log.i("TestVideoEncoder", "gl draw");
                     });
                     testVideoEncoder.start();
                     for (int i = 0; i < 120; i++) {
@@ -129,9 +113,7 @@ public class TestVideoEncoderActivity extends AppCompatActivity {
                 }
             }
         };
-
     }
-
 
     @Override
     protected void onResume() {

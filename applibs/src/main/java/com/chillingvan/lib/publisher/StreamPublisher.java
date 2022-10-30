@@ -88,14 +88,11 @@ public class StreamPublisher {
                 @Override
                 public void onComing() {
                     MediaCodecInputStream mediaCodecInputStream = aacEncoder.getMediaCodecInputStream();
-                    MediaCodecInputStream.readAll(mediaCodecInputStream, writeBuffer, new MediaCodecInputStream.OnReadAllCallback() {
-                        @Override
-                        public void onReadOnce(byte[] buffer, int readSize, MediaCodec.BufferInfo bufferInfo) {
-                            if (readSize <= 0) {
-                                return;
-                            }
-                            muxer.writeAudio(buffer, 0, readSize, bufferInfo);
+                    MediaCodecInputStream.readAll(mediaCodecInputStream, writeBuffer, (buffer, readSize, bufferInfo) -> {
+                        if (readSize <= 0) {
+                            return;
                         }
+                        muxer.writeAudio(buffer, 0, readSize, bufferInfo);
                     });
                 }
             });

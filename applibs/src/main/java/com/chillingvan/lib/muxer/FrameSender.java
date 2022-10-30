@@ -73,7 +73,6 @@ public class FrameSender {
         };
     }
 
-
     private void addFrame(FramePool.Frame frame) {
         frameQueue.add(frame);
         FramePool.Frame.sortFrame(frameQueue);
@@ -118,6 +117,5 @@ public class FrameSender {
         void onSendVideo(FramePool.Frame sendFrame);
         void onSendAudio(FramePool.Frame sendFrame);
         void close();
-
     }
 }

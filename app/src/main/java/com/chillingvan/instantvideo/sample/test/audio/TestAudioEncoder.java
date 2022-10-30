@@ -40,15 +40,12 @@ import java.io.OutputStream;
  */
 
 public class TestAudioEncoder {
-
-
     private AACEncoder aacEncoder;
     private byte[] writeBuffer = new byte[1024 * 64];
     private OutputStream os;
     private boolean isStart;
 
     public TestAudioEncoder(Context ctx) {
-
         try {
             os = new FileOutputStream(ctx.getExternalFilesDir(null) + File.separator + "test_aac_encode.aac");
         } catch (FileNotFoundException e) {
@@ -80,7 +77,6 @@ public class TestAudioEncoder {
         }
     }
 
-
     public void stop() {
         isStart = false;
         if (aacEncoder != null) {
@@ -98,6 +94,7 @@ public class TestAudioEncoder {
         MediaCodecInputStream.readAll(mediaCodecInputStream, writeBuffer, new MediaCodecInputStream.OnReadAllCallback() {
             boolean shouldAddPacketHeader = true;
             byte[] header = new byte[7];
+
             @Override
             public void onReadOnce(byte[] buffer, int readSize, MediaCodec.BufferInfo bufferInfo) {
                 if (readSize <= 0) {

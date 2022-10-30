@@ -46,7 +46,6 @@ public class RTMPStreamMuxer extends BaseMuxer {
 
 
     /**
-     *
      * @return 1 if it is connected
      * 0 if it is not connected
      */
@@ -62,7 +61,7 @@ public class RTMPStreamMuxer extends BaseMuxer {
         // -2 Url format error; -3 Connect error.
         int open = rtmpMuxer.open(params.outputUrl, params.width, params.height);
         Loggers.d("RTMPStreamMuxer", String.format(Locale.CHINA, "open: open: %d", open));
-        int connected = rtmpMuxer.isConnected();
+        int connected = rtmpMuxer.isConnected() ? 1 : -1;
         Loggers.d("RTMPStreamMuxer", String.format(Locale.CHINA, "open: isConnected: %d", connected));
 
         Loggers.d("RTMPStreamMuxer", String.format("open: %s", params.outputUrl));
@@ -73,17 +72,16 @@ public class RTMPStreamMuxer extends BaseMuxer {
 
         frameSender = new FrameSender(new FrameSender.FrameSenderCallback() {
             @Override
-            public void onStart() {}
+            public void onStart() {
+            }
 
             @Override
             public void onSendVideo(FramePool.Frame sendFrame) {
-
                 rtmpMuxer.writeVideo(sendFrame.data, 0, sendFrame.length, sendFrame.bufferInfo.getTotalTime());
             }
 
             @Override
             public void onSendAudio(FramePool.Frame sendFrame) {
-
                 rtmpMuxer.writeAudio(sendFrame.data, 0, sendFrame.length, sendFrame.bufferInfo.getTotalTime());
             }
 
@@ -109,7 +107,6 @@ public class RTMPStreamMuxer extends BaseMuxer {
         Loggers.d("RTMPStreamMuxer", "writeVideo: " + " time:" + videoTimeIndexCounter.getTimeIndex() + " offset:" + offset + " length:" + length);
         frameSender.sendAddFrameMessage(buffer, offset, length, new BufferInfoEx(bufferInfo, videoTimeIndexCounter.getTimeIndex()), FramePool.Frame.TYPE_VIDEO);
     }
-
 
 
     @Override

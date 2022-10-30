@@ -20,6 +20,7 @@
 
 package com.chillingvan.lib.encoder.audio;
 
+import android.annotation.SuppressLint;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
@@ -52,23 +53,19 @@ public class AACEncoder {
     private final int bufferSize;
     private boolean isStart;
 
+    @SuppressLint("MissingPermission")
     public AACEncoder(final StreamPublisher.StreamPublisherParam params) throws IOException {
         this.samplingRate = params.samplingRate;
 
-        bufferSize = params.audioBufferSize;
+        bufferSize = Math.max(AudioRecord.getMinBufferSize(params.samplingRate, params.channelCfg,
+                AudioFormat.ENCODING_PCM_16BIT), params.audioBufferSize);
         mMediaCodec = MediaCodec.createEncoderByType(params.audioMIME);
         mMediaCodec.configure(params.createAudioMediaFormat(), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        mediaCodecInputStream = new MediaCodecInputStream(mMediaCodec, new MediaCodecInputStream.MediaFormatCallback() {
-            @Override
-            public void onChangeMediaFormat(MediaFormat mediaFormat) {
-                params.setAudioOutputMediaFormat(mediaFormat);
-            }
-        });
+        mediaCodecInputStream = new MediaCodecInputStream(mMediaCodec, mediaFormat -> params.setAudioOutputMediaFormat(mediaFormat));
         mAudioRecord = new AudioRecord(params.audioSource, samplingRate, params.channelCfg, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
         if (NoiseSuppressor.isAvailable()) {
             NoiseSuppressor noiseSuppressor = NoiseSuppressor.create(mAudioRecord.getAudioSessionId());
         }
-
     }
 
     public void start() {
@@ -76,28 +73,25 @@ public class AACEncoder {
         mMediaCodec.start();
         final long startWhen = System.nanoTime();
         final ByteBuffer[] inputBuffers = mMediaCodec.getInputBuffers();
-        mThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int len, bufferIndex;
-                while (isStart && !Thread.interrupted()) {
-                    synchronized (mMediaCodec) {
-                        if (!isStart) return;
-                        bufferIndex = mMediaCodec.dequeueInputBuffer(10000);
-                        if (bufferIndex >= 0) {
-                            inputBuffers[bufferIndex].clear();
-                            long presentationTimeNs = System.nanoTime();
-                            len = mAudioRecord.read(inputBuffers[bufferIndex], bufferSize);
-                            presentationTimeNs -= (len / samplingRate ) / 1000000000;
-                            Loggers.i(TAG, "Index: " + bufferIndex + " len: " + len + " buffer_capacity: " + inputBuffers[bufferIndex].capacity());
-                            long presentationTimeUs = (presentationTimeNs - startWhen) / 1000;
-                            if (len == AudioRecord.ERROR_INVALID_OPERATION || len == AudioRecord.ERROR_BAD_VALUE) {
-                                Log.e(TAG, "An error occured with the AudioRecord API !");
-                            } else {
-                                mMediaCodec.queueInputBuffer(bufferIndex, 0, len, presentationTimeUs, 0);
-                                if (onDataComingCallback != null) {
-                                    onDataComingCallback.onComing();
-                                }
+        mThread = new Thread(() -> {
+            int len, bufferIndex;
+            while (isStart && !Thread.interrupted()) {
+                synchronized (mMediaCodec) {
+                    if (!isStart) return;
+                    bufferIndex = mMediaCodec.dequeueInputBuffer(10000);
+                    if (bufferIndex >= 0) {
+                        inputBuffers[bufferIndex].clear();
+                        long presentationTimeNs = System.nanoTime();
+                        len = mAudioRecord.read(inputBuffers[bufferIndex], bufferSize);
+                        presentationTimeNs -= (len / samplingRate ) / 1000000000;
+                        Loggers.i(TAG, "Index: " + bufferIndex + " len: " + len + " buffer_capacity: " + inputBuffers[bufferIndex].capacity());
+                        long presentationTimeUs = (presentationTimeNs - startWhen) / 1000;
+                        if (len == AudioRecord.ERROR_INVALID_OPERATION || len == AudioRecord.ERROR_BAD_VALUE) {
+                            Log.e(TAG, "An error occured with the AudioRecord API !");
+                        } else {
+                            mMediaCodec.queueInputBuffer(bufferIndex, 0, len, presentationTimeUs, 0);
+                            if (onDataComingCallback != null) {
+                                onDataComingCallback.onComing();
                             }
                         }
                     }

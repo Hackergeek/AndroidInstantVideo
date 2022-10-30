@@ -138,16 +138,13 @@ public class FramePool {
         }
 
         public static void sortFrame(List<Frame> frameQueue) {
-            Collections.sort(frameQueue, new Comparator<Frame>() {
-                @Override
-                public int compare(Frame left, Frame right) {
-                    if (left.bufferInfo.getTotalTime() < right.bufferInfo.getTotalTime()) {
-                        return -1;
-                    } else if (left.bufferInfo.getTotalTime() == right.bufferInfo.getTotalTime()) {
-                        return 0;
-                    } else {
-                        return 1;
-                    }
+            Collections.sort(frameQueue, (left, right) -> {
+                if (left.bufferInfo.getTotalTime() < right.bufferInfo.getTotalTime()) {
+                    return -1;
+                } else if (left.bufferInfo.getTotalTime() == right.bufferInfo.getTotalTime()) {
+                    return 0;
+                } else {
+                    return 1;
                 }
             });
         }

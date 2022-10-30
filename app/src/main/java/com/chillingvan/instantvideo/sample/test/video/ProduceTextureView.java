@@ -25,7 +25,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 
 import com.chillingvan.canvasgl.ICanvasGL;
@@ -59,7 +59,6 @@ public class ProduceTextureView extends GLSurfaceTextureProducerView {
         super(context, attrs, defStyleAttr);
     }
 
-
     @Override
     public void onSurfaceCreated() {
         bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.lenna);
@@ -70,7 +69,6 @@ public class ProduceTextureView extends GLSurfaceTextureProducerView {
     public void setTextureFilter(TextureFilter textureFilter) {
         this.textureFilter = textureFilter;
     }
-
 
     @Override
     protected void onGLDraw(ICanvasGL canvas, SurfaceTexture producedSurfaceTexture, RawTexture producedRawTexture, @Nullable SurfaceTexture sharedSurfaceTexture, @Nullable BasicTexture sharedTexture) {

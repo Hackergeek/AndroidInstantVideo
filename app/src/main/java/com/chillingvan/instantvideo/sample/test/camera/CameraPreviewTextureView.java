@@ -65,12 +65,9 @@ public class CameraPreviewTextureView extends GLMultiTexProducerView {
     @Override
     protected void onGLDraw(ICanvasGL canvas, List<GLTexture> producedTextures, List<GLTexture> consumedTextures) {
         onDrawListener.onGLDraw(canvas, producedTextures, consumedTextures);
-        drawTextHelper.draw(new IAndroidCanvasHelper.CanvasPainter() {
-            @Override
-            public void draw(Canvas androidCanvas) {
-                androidCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                androidCanvas.drawText("白色, White", 100, 100, textPaint);
-            }
+        drawTextHelper.draw(androidCanvas -> {
+            androidCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+            androidCanvas.drawText("白色, White", 100, 100, textPaint);
         });
         Bitmap outputBitmap = drawTextHelper.getOutputBitmap();
         canvas.invalidateTextureContent(outputBitmap);

@@ -132,19 +132,16 @@ public class TestVideoEncoder {
 
     public void write() {
         MediaCodecInputStream mediaCodecInputStream = h264Encoder.getMediaCodecInputStream();
-        MediaCodecInputStream.readAll(mediaCodecInputStream, writeBuffer, new MediaCodecInputStream.OnReadAllCallback() {
-            @Override
-            public void onReadOnce(byte[] buffer, int readSize, MediaCodec.BufferInfo bufferInfo) {
-                Loggers.d("TestVideoEncoder", String.format("onReadOnce: readSize:%d", readSize));
-                if (readSize <= 0) {
-                    return;
-                }
-                try {
-                    os.write(buffer, 0, readSize);
-                    os.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        MediaCodecInputStream.readAll(mediaCodecInputStream, writeBuffer, (buffer, readSize, bufferInfo) -> {
+            Loggers.d("TestVideoEncoder", String.format("onReadOnce: readSize:%d", readSize));
+            if (readSize <= 0) {
+                return;
+            }
+            try {
+                os.write(buffer, 0, readSize);
+                os.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         });
     }

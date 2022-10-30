@@ -6,7 +6,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.view.View;
 import android.widget.TextView;
 
@@ -40,18 +42,14 @@ public class TestCameraAndVideoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_and_video);
         cameraPreviewTextureView = (CameraPreviewTextureView) findViewById(R.id.camera_produce_view);
-        cameraPreviewTextureView.setOnDrawListener(new H264Encoder.OnDrawListener() {
-            @Override
-            public void onGLDraw(ICanvasGL canvasGL, List<GLTexture> producedTextures, List<GLTexture> consumedTextures) {
+        cameraPreviewTextureView.setOnDrawListener((canvasGL, producedTextures, consumedTextures) -> {
 
-                GLTexture texture = producedTextures.get(0);
-                SurfaceTexture surfaceTexture = texture.getSurfaceTexture();
-                RawTexture rawTexture = texture.getRawTexture();
-                canvasGL.drawSurfaceTexture(rawTexture, surfaceTexture, 0, 0, rawTexture.getWidth(), rawTexture.getHeight());
-            }
+            GLTexture texture = producedTextures.get(0);
+            SurfaceTexture surfaceTexture = texture.getSurfaceTexture();
+            RawTexture rawTexture = texture.getRawTexture();
+            canvasGL.drawSurfaceTexture(rawTexture, surfaceTexture, 0, 0, rawTexture.getWidth(), rawTexture.getHeight());
         });
         instantVideoCamera = new InstantVideoCamera(Camera.CameraInfo.CAMERA_FACING_FRONT, 1280, 720);
-
     }
 
     private void initWriteFileHandler() {
@@ -79,34 +77,22 @@ public class TestCameraAndVideoActivity extends AppCompatActivity {
     }
 
     private void initCameraTexture() {
-        cameraPreviewTextureView.setOnCreateGLContextListener(new GLThread.OnCreateGLContextListener() {
-            @Override
-            public void onCreate(EglContextWrapper eglContext) {
-                testVideoEncoder = new TestVideoEncoder(getApplicationContext(), eglContext);
-            }
-        });
-        cameraPreviewTextureView.setSurfaceTextureCreatedListener(new GLMultiTexProducerView.SurfaceTextureCreatedListener() {
-            @Override
-            public void onCreated(List<GLTexture> producedTextureList) {
-                GLTexture texture = producedTextureList.get(0);
-                SurfaceTexture surfaceTexture = texture.getSurfaceTexture();
-                testVideoEncoder.addSharedTexture(texture.getRawTexture(), surfaceTexture);
-                surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
-                    @Override
-                    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                        cameraPreviewTextureView.requestRenderAndWait();
-                        if (testVideoEncoder.encodeAFrame()) {
-                            outputVideoHandler.sendEmptyMessage(0);
-                        }
-                    }
-                });
+        cameraPreviewTextureView.setOnCreateGLContextListener(eglContext -> testVideoEncoder = new TestVideoEncoder(getApplicationContext(), eglContext));
+        cameraPreviewTextureView.setSurfaceTextureCreatedListener(producedTextureList -> {
+            GLTexture texture = producedTextureList.get(0);
+            SurfaceTexture surfaceTexture = texture.getSurfaceTexture();
+            testVideoEncoder.addSharedTexture(texture.getRawTexture(), surfaceTexture);
+            surfaceTexture.setOnFrameAvailableListener(surfaceTexture1 -> {
+                cameraPreviewTextureView.requestRenderAndWait();
+                if (testVideoEncoder.encodeAFrame()) {
+                    outputVideoHandler.sendEmptyMessage(0);
+                }
+            });
 
-                instantVideoCamera.setPreview(surfaceTexture);
-                instantVideoCamera.startPreview();
-            }
+            instantVideoCamera.setPreview(surfaceTexture);
+            instantVideoCamera.startPreview();
         });
     }
-
 
     @Override
     protected void onPause() {
@@ -120,27 +106,23 @@ public class TestCameraAndVideoActivity extends AppCompatActivity {
         outputVideoThread.quit();
     }
 
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
         testVideoEncoder.destroy();
     }
+
     public void clickStartTest(View view) {
         TextView textView = (TextView) view;
         if (testVideoEncoder.isStart()) {
             testVideoEncoder.stop();
             textView.setText("START");
         } else {
-            testVideoEncoder.prepareEncoder(new H264Encoder.OnDrawListener() {
-                @Override
-                public void onGLDraw(ICanvasGL canvasGL, List<GLTexture> producedTextures, List<GLTexture> consumedTextures) {
-                    GLTexture texture = consumedTextures.get(0);
-                    SurfaceTexture outsideSurfaceTexture = texture.getSurfaceTexture();
-                    RawTexture outsideTexture = texture.getRawTexture();
-                    canvasGL.drawSurfaceTexture(outsideTexture, outsideSurfaceTexture, 0, 0, outsideTexture.getWidth(), outsideTexture.getHeight());
-                }
-
+            testVideoEncoder.prepareEncoder((canvasGL, producedTextures, consumedTextures) -> {
+                GLTexture texture = consumedTextures.get(0);
+                SurfaceTexture outsideSurfaceTexture = texture.getSurfaceTexture();
+                RawTexture outsideTexture = texture.getRawTexture();
+                canvasGL.drawSurfaceTexture(outsideTexture, outsideSurfaceTexture, 0, 0, outsideTexture.getWidth(), outsideTexture.getHeight());
             });
             testVideoEncoder.start();
             textView.setText("STOP");

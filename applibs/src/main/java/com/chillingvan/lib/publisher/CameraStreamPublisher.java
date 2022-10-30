@@ -36,11 +36,9 @@ import java.util.List;
 /**
  * Data Stream:
  * Camera -> SurfaceTexture of GLSurfaceTextureProducerView -> Surface of MediaCodec -> encode data(byte[]) -> RTMPMuxer -> Server
- *
  */
 
 public class CameraStreamPublisher {
-
     private StreamPublisher streamPublisher;
     private IMuxer muxer;
     private GLMultiTexProducerView cameraPreviewTextureView;
@@ -54,32 +52,21 @@ public class CameraStreamPublisher {
     }
 
     private void initCameraTexture() {
-        cameraPreviewTextureView.setOnCreateGLContextListener(new GLThread.OnCreateGLContextListener() {
-            @Override
-            public void onCreate(EglContextWrapper eglContext) {
-                streamPublisher = new StreamPublisher(eglContext, muxer);
+        cameraPreviewTextureView.setOnCreateGLContextListener(eglContext -> streamPublisher = new StreamPublisher(eglContext, muxer));
+        cameraPreviewTextureView.setSurfaceTextureCreatedListener(producedTextureList -> {
+            if (onSurfacesCreatedListener != null) {
+                onSurfacesCreatedListener.onCreated(producedTextureList, streamPublisher);
             }
-        });
-        cameraPreviewTextureView.setSurfaceTextureCreatedListener(new GLMultiTexProducerView.SurfaceTextureCreatedListener() {
-            @Override
-            public void onCreated(List<GLTexture> producedTextureList) {
-                if (onSurfacesCreatedListener != null) {
-                    onSurfacesCreatedListener.onCreated(producedTextureList, streamPublisher);
-                }
-                GLTexture texture = producedTextureList.get(0);
-                SurfaceTexture surfaceTexture = texture.getSurfaceTexture();
-                streamPublisher.addSharedTexture(new GLTexture(texture.getRawTexture(), surfaceTexture));
-                surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
-                    @Override
-                    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                        cameraPreviewTextureView.requestRenderAndWait();
-                        streamPublisher.drawAFrame();
-                    }
-                });
+            GLTexture texture = producedTextureList.get(0);
+            SurfaceTexture surfaceTexture = texture.getSurfaceTexture();
+            streamPublisher.addSharedTexture(new GLTexture(texture.getRawTexture(), surfaceTexture));
+            surfaceTexture.setOnFrameAvailableListener(surfaceTexture1 -> {
+                cameraPreviewTextureView.requestRenderAndWait();
+                streamPublisher.drawAFrame();
+            });
 
-                instantVideoCamera.setPreview(surfaceTexture);
-                instantVideoCamera.startPreview();
-            }
+            instantVideoCamera.setPreview(surfaceTexture);
+            instantVideoCamera.startPreview();
         });
     }
 

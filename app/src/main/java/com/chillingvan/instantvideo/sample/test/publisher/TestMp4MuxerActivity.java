@@ -32,8 +32,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
@@ -126,15 +126,11 @@ public class TestMp4MuxerActivity extends AppCompatActivity {
                         .createStreamPublisherParam();
                 streamPublisherParam.outputFilePath = outputDir;
                 streamPublisherParam.setInitialTextureCount(2);
-                streamPublisher.prepareEncoder(streamPublisherParam, new H264Encoder.OnDrawListener() {
-                    @Override
-                    public void onGLDraw(ICanvasGL canvasGL, List<GLTexture> producedTextures, List<GLTexture> consumedTextures) {
-                        GLTexture texture = consumedTextures.get(1);
-                        GLTexture mediaTexture = consumedTextures.get(0);
-                        drawVideoFrame(canvasGL, texture.getSurfaceTexture(), texture.getRawTexture(), mediaTexture);
-                        Loggers.i("DEBUG", "gl draw");
-                    }
-
+                streamPublisher.prepareEncoder(streamPublisherParam, (canvasGL, producedTextures, consumedTextures) -> {
+                    GLTexture texture = consumedTextures.get(1);
+                    GLTexture mediaTexture = consumedTextures.get(0);
+                    drawVideoFrame(canvasGL, texture.getSurfaceTexture(), texture.getRawTexture(), mediaTexture);
+                    Loggers.i("DEBUG", "gl draw");
                 });
                 try {
                     streamPublisher.startPublish();

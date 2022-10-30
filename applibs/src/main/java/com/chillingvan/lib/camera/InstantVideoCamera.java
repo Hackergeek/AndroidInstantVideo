@@ -118,6 +118,4 @@ public class InstantVideoCamera implements CameraInterface {
             isOpened = false;
         }
     }
-
-
 }

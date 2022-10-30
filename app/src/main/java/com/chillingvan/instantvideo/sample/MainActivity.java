@@ -48,7 +48,6 @@ public class MainActivity extends ListActivity {
     private static final String CATEGORY_ACTIVITIES = "com.chillingvan.instantvideo.sample";
     public static final String INTENT_PATH = "com.chillingvan.instantvideo.sample.Path";
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,28 +69,27 @@ public class MainActivity extends ListActivity {
 
         //If you can get the keyboard, you can type to search the items of the list
         getListView().setTextFilterEnabled(true);
-
     }
 
     private void getPermission() {
-        Nammu.init(getApplicationContext());
+        Nammu.INSTANCE.init(getApplicationContext());
         askPermission(Manifest.permission.CAMERA);
         askPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         askPermission(Manifest.permission.RECORD_AUDIO);
     }
 
     private void askPermission(String permissionName) {
-        if (!Nammu.checkPermission(permissionName)) {
-            if (Nammu.shouldShowRequestPermissionRationale(this, permissionName)) {
+        if (!Nammu.INSTANCE.checkPermission(permissionName)) {
+            if (Nammu.INSTANCE.shouldShowRequestPermissionRationale(this, permissionName)) {
                 Toast.makeText(this, R.string.permission_tips, Toast.LENGTH_SHORT).show();
-                Nammu.askForPermission(MainActivity.this, permissionName, new PermissionCallback() {
+                Nammu.INSTANCE.askForPermission(MainActivity.this, permissionName, new PermissionCallback() {
                     @Override
                     public void permissionGranted() { }
                     @Override
                     public void permissionRefused() { }
                 });
             } else {
-                Nammu.askForPermission(MainActivity.this, permissionName, new PermissionCallback() {
+                Nammu.INSTANCE.askForPermission(MainActivity.this, permissionName, new PermissionCallback() {
                     @Override
                     public void permissionGranted() { }
                     @Override
@@ -209,6 +207,5 @@ public class MainActivity extends ListActivity {
         Intent intent = (Intent) map.get("intent");
         startActivity(intent);
     }
-
 
 }

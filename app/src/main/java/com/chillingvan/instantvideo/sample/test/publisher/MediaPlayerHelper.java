@@ -66,7 +66,7 @@ public class MediaPlayerHelper {
         mediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
             @Override
             public void onSeekComplete(MediaPlayer mediaPlayer) {
-                Loggers.i("onSeekComplete","onSeekComplete----"+mediaPlayer.getCurrentPosition());
+                Loggers.i("onSeekComplete", "onSeekComplete----" + mediaPlayer.getCurrentPosition());
             }
         });
 
@@ -102,7 +102,6 @@ public class MediaPlayerHelper {
             mediaPlayer.pause();
         }
     }
-
 
     public void release() {
         if (mediaPlayer != null) {
